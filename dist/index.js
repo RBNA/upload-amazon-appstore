@@ -41,6 +41,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const fs_1 = __importDefault(__nccwpck_require__(9896));
 const node_fetch_1 = __importDefault(__nccwpck_require__(4034));
+const path_1 = __importDefault(__nccwpck_require__(6928));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -135,11 +136,13 @@ function run() {
                 .catch((error) => {
                 core.setFailed(error.message);
             });
+            const filename = path_1.default.basename(apkFile);
             yield (0, node_fetch_1.default)(`${baseUrl}/v1/applications/${appId}/edits/${editId}/apks/${apkId}/replace`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/vnd.android.package-archive',
                     Authorization: authHeader,
+                    'fileName': filename,
                     'If-Match': eTag,
                 },
                 body: fs_1.default.createReadStream(apkFile),

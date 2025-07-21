@@ -50,7 +50,7 @@ function run() {
             const appId = core.getInput('appId');
             const apkFile = core.getInput('releaseFile');
             const baseUrl = 'https://developer.amazon.com/api/appstore';
-            let editId, apkId;
+            let editId, apkId, eTag;
             // @ts-ignore
             function handleErrors(response) {
                 if (!response.ok)
@@ -121,13 +121,29 @@ function run() {
                 .catch((error) => {
                 core.setFailed(error.message);
             });
+            eTag = "";
+            yield (0, node_fetch_1.default)(`${baseUrl}/v1/applications/${appId}/edits/${editId}/apks/${apkId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: authHeader,
+                },
+            })
+                .then(handleErrors)
+                .then((response) => {
+                eTag = response.headers.get('etag');
+            })
+                .catch((error) => {
+                core.setFailed(error.message);
+            });
             const filename = path_1.default.basename(apkFile);
-            yield (0, node_fetch_1.default)(`${baseUrl}/v1/applications/${appId}/edits/${editId}/apks/${apkId}/upload`, {
-                method: 'POST',
+            yield (0, node_fetch_1.default)(`${baseUrl}/v1/applications/${appId}/edits/${editId}/apks/${apkId}/replace`, {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/vnd.android.package-archive',
                     Authorization: authHeader,
                     'fileName': filename,
+                    'If-Match': eTag,
                 },
                 body: fs_1.default.createReadStream(apkFile),
             })
